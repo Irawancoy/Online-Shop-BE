@@ -1,6 +1,9 @@
 package com.readinessbtpnbe.orderBE.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -50,8 +53,10 @@ public MessageResponse delete(@RequestParam int itemId) {
 
 // get all item
 @GetMapping("/get-all")
-public ResponseEntity<Object> getAll() {
-   return ResponseEntity.ok(itemService.getAllItem());
+public ResponseEntity<Object> getAll(
+   @PageableDefault(page=0,size=8,sort="itemName",direction=Direction.DESC) Pageable pageable
+) {
+   return itemService.getAllItem(pageable);
 }
 
 // get item by id

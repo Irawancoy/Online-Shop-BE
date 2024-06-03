@@ -7,9 +7,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import com.readinessbtpnbe.orderBE.dto.request.CreateCustomerRequest;
 import com.readinessbtpnbe.orderBE.dto.request.UpdateCustomerRequest;
@@ -19,6 +22,7 @@ import com.readinessbtpnbe.orderBE.repository.CustomerRepository;
 
 import com.readinessbtpnbe.orderBE.dto.response.DaftarCustomersDTO;
 import com.readinessbtpnbe.orderBE.dto.response.ResponseBodyDTO;
+
 
 @Slf4j
 @Service
@@ -99,10 +103,11 @@ public class CustomerService {
    }
 
    // get all customer
-   public ResponseBodyDTO getAllCustomer() {
+   public ResponseEntity<Object> getAllCustomer(Pageable pageable) {
+      ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
       try {
          // get all customer
-         List<CustomerModel> customerModelList = customerRepository.findAll();
+         Page<CustomerModel> customerModelList = customerRepository.findAll(pageable);
 
          List<DaftarCustomersDTO> response = customerModelList.stream().map(customerModel -> {
             DaftarCustomersDTO daftarCustomersDTO = new DaftarCustomersDTO();
@@ -115,23 +120,22 @@ public class CustomerService {
             daftarCustomersDTO.setLastOrderDate(customerModel.getLastOrderDate());
             daftarCustomersDTO.setPic(customerModel.getPic());
             return daftarCustomersDTO;
+
          }).collect(Collectors.toList());
 
-         ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
-         responseBodyDTO.setTotal(response.size());
+         responseBodyDTO.setTotal(customerRepository.count());
          responseBodyDTO.setData(response);
          responseBodyDTO.setMessage("Daftar Customer Berhasil Ditemukan");
          responseBodyDTO.setStatusCode(HttpStatus.OK.value());
-         responseBodyDTO.setStatus("OK");
+         responseBodyDTO.setStatus(HttpStatus.OK.name());
 
-         return responseBodyDTO;
+         return ResponseEntity.status(HttpStatus.OK).body(responseBodyDTO);
 
       } catch (Exception e) {
-         ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
-         responseBodyDTO.setTotal(0);
          responseBodyDTO.setMessage("Daftar Customer Gagal Ditemukan");
          responseBodyDTO.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-         return responseBodyDTO;
+         responseBodyDTO.setStatus("ERROR");
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBodyDTO);
       }
    }
 

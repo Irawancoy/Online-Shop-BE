@@ -5,11 +5,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import com.readinessbtpnbe.orderBE.dto.request.CreateItemRequest;
 import com.readinessbtpnbe.orderBE.dto.request.UpdateItemRequest;
@@ -95,9 +98,10 @@ public class ItemService {
    }
 
    // get all item
-   public ResponseBodyDTO getAllItem() {
+   public ResponseEntity<Object> getAllItem(Pageable pageable) {
+      ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
       try {
-         List<ItemModel> itemModelList = itemRepository.findAll();
+         Page<ItemModel> itemModelList = itemRepository.findAll(pageable);
          List<DaftarItemDTO> response = itemModelList.stream().map(itemModel -> {
             DaftarItemDTO daftarItemDTO = new DaftarItemDTO();
             daftarItemDTO.setItemId(itemModel.getItemId());
@@ -110,21 +114,18 @@ public class ItemService {
             return daftarItemDTO;
          }).collect(Collectors.toList());
 
-         ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
-         responseBodyDTO.setTotal(response.size());
+         responseBodyDTO.setTotal(itemRepository.count());
          responseBodyDTO.setData(response);
          responseBodyDTO.setMessage("Daftar Item Berhasil Ditemukan");
          responseBodyDTO.setStatusCode(HttpStatus.OK.value());
-         responseBodyDTO.setStatus("OK");
-         return responseBodyDTO;
+         responseBodyDTO.setStatus(HttpStatus.OK.name() );
+         return ResponseEntity.status(HttpStatus.OK).body(responseBodyDTO);
 
       } catch (Exception e) {
-         // TODO: handle exception
-         ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
          responseBodyDTO.setMessage("Daftar Item Gagal Ditemukan");
          responseBodyDTO.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
          responseBodyDTO.setStatus("ERROR");
-         return responseBodyDTO;
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBodyDTO);
       }
    }
 
@@ -165,6 +166,5 @@ public class ItemService {
          return responseBodyDTO;
       }
    }
-   
 
 }

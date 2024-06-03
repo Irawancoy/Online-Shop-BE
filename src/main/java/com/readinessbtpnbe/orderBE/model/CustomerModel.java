@@ -8,7 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression.DateTime;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Data;
 
@@ -43,7 +43,7 @@ public class CustomerModel implements java.io.Serializable {
    private int isActive;
 
    @Column(name="last_order_date")
-   private DateTime lastOrderDate;
+   private LocalDateTime lastOrderDate;
 
    @Column(name="pic")
    private String pic;

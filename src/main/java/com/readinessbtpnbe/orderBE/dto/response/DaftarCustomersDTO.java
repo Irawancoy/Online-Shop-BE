@@ -1,7 +1,7 @@
 package com.readinessbtpnbe.orderBE.dto.response;
 
 import lombok.Data;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression.DateTime;
+import java.time.LocalDateTime;
 
 @Data
 public class DaftarCustomersDTO {
@@ -11,7 +11,7 @@ public class DaftarCustomersDTO {
       private String customerCode;
       private String customerPhone;
       private int isActive;
-      private DateTime lastOrderDate;
+      private LocalDateTime lastOrderDate;
       private String pic;
 
 }

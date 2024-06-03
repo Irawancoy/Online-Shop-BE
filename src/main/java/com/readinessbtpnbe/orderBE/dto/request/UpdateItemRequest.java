@@ -1,7 +1,8 @@
 package com.readinessbtpnbe.orderBE.dto.request;
 
+import java.time.LocalDateTime;
+
 import lombok.Data;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression.DateTime;
 
 @Data
 public class UpdateItemRequest {
@@ -11,7 +12,7 @@ public class UpdateItemRequest {
    private int stock;
    private int price;
    private int isAvailable;
-   private DateTime lastReStock;
+   private LocalDateTime lastReStock;
 
 
 

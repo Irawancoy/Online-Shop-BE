@@ -1,7 +1,8 @@
 package com.readinessbtpnbe.orderBE.dto.request;
 
 import lombok.Data;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression.DateTime;
+
+import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotEmpty;
 
@@ -15,6 +16,6 @@ public class CreateItemRequest {
       private int stock;
       private int price;
       private int isAvailable;
-      private DateTime lastReStock;
+      private LocalDateTime lastReStock;
 
 }

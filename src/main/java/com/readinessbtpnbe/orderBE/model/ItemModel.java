@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression.DateTime;
+import java.time.LocalDateTime;
 
 @Table(name = "items")
 @Data
@@ -43,6 +43,6 @@ public class ItemModel implements java.io.Serializable {
    private int isAvailable;
 
    @Column(name = "last_re_stock")
-   private DateTime lastReStock;
+   private LocalDateTime lastReStock;
 
 }

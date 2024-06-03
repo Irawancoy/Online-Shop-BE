@@ -1,7 +1,7 @@
 package com.readinessbtpnbe.orderBE.dto.response;
 
 import lombok.Data;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression.DateTime;
+import java.time.LocalDateTime;
 
 @Data
 public class DaftarItemDTO {
@@ -11,6 +11,6 @@ public class DaftarItemDTO {
       private int stock;
       private int price;
       private int isAvailable;
-      private DateTime lastReStock;
+      private LocalDateTime lastReStock;
 
 }
