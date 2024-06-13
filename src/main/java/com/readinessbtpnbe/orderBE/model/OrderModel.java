@@ -2,8 +2,8 @@ package com.readinessbtpnbe.orderBE.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
+import java.sql.Date;
 
 @Table(name = "orders")
 @Data
@@ -24,7 +24,7 @@ public class OrderModel implements java.io.Serializable {
    private String orderCode;
 
    @Column(name = "order_date", nullable = false, updatable = false)
-   private LocalDateTime orderDate;
+   private Date orderDate;
 
    @Column(name = "total_price")
    private int totalPrice;

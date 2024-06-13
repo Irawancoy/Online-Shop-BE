@@ -53,7 +53,7 @@ public class OrderController {
    // get all order
    @GetMapping("/get-all")
    public ResponseEntity<Object> getAll(
-      @PageableDefault(page = 0,size = 8,sort = "orderDate",direction = Direction.DESC) Pageable pageable
+      @PageableDefault(page = 0,size = 8,sort = "orderId",direction = Direction.ASC) Pageable pageable
    ) {
       return orderService.getAllOrder(pageable);
    }

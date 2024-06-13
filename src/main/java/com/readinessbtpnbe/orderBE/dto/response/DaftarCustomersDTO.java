@@ -1,8 +1,6 @@
 package com.readinessbtpnbe.orderBE.dto.response;
 
 import lombok.Data;
-import java.time.LocalDateTime;
-
 @Data
 public class DaftarCustomersDTO {
       private int customerId;
@@ -11,7 +9,7 @@ public class DaftarCustomersDTO {
       private String customerCode;
       private String customerPhone;
       private int isActive;
-      private LocalDateTime lastOrderDate;
+      private String lastOrderDate;
       private String pic;
 
 }

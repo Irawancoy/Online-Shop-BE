@@ -23,6 +23,8 @@ import com.readinessbtpnbe.orderBE.repository.CustomerRepository;
 import com.readinessbtpnbe.orderBE.dto.response.DaftarCustomersDTO;
 import com.readinessbtpnbe.orderBE.dto.response.ResponseBodyDTO;
 
+import java.text.SimpleDateFormat;
+
 
 @Slf4j
 @Service
@@ -34,9 +36,11 @@ public class CustomerService {
    @Transactional
    public MessageResponse create(CreateCustomerRequest request) {
       try {
+         String customerCode = "C" + (int) (Math.random() * 1000);
+
          // create
          CustomerModel customerModel = CustomerModel.builder().customerName(request.getCustomerName())
-               .customerAddress(request.getCustomerAddress()).customerCode(request.getCustomerCode())
+               .customerAddress(request.getCustomerAddress()).customerCode(customerCode)
                .customerPhone(request.getCustomerPhone()).isActive(request.getIsActive()).pic(request.getPic()).build();
          customerRepository.save(customerModel);
          return new MessageResponse("Customer " + request.getCustomerName() + " Berhasil Ditambahkan",
@@ -69,9 +73,8 @@ public class CustomerService {
             if (request.getCustomerPhone() != null && !request.getCustomerPhone().isEmpty()) {
                customerModel.setCustomerPhone(request.getCustomerPhone());
             }
-            if (request.getIsActive() != 0) {
                customerModel.setIsActive(request.getIsActive());
-            }
+
             if (request.getPic() != null && !request.getPic().isEmpty()) {
                customerModel.setPic(request.getPic());
             }
@@ -117,11 +120,23 @@ public class CustomerService {
             daftarCustomersDTO.setCustomerCode(customerModel.getCustomerCode());
             daftarCustomersDTO.setCustomerPhone(customerModel.getCustomerPhone());
             daftarCustomersDTO.setIsActive(customerModel.getIsActive());
-            daftarCustomersDTO.setLastOrderDate(customerModel.getLastOrderDate());
+            daftarCustomersDTO.setLastOrderDate(
+       null
+            );
             daftarCustomersDTO.setPic(customerModel.getPic());
+            if (customerModel.getLastOrderDate() != null) {
+               SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+               String formattedLastOrderDate = sdf.format(customerModel.getLastOrderDate());
+               daftarCustomersDTO.setLastOrderDate(formattedLastOrderDate);
+           } else {
+               daftarCustomersDTO.setLastOrderDate(null);
+           }
             return daftarCustomersDTO;
 
          }).collect(Collectors.toList());
+     
+
+         
 
          responseBodyDTO.setTotal(customerRepository.count());
          responseBodyDTO.setData(response);
@@ -158,9 +173,14 @@ public class CustomerService {
             daftarCustomersDTO.setCustomerCode(customerModel.getCustomerCode());
             daftarCustomersDTO.setCustomerPhone(customerModel.getCustomerPhone());
             daftarCustomersDTO.setIsActive(customerModel.getIsActive());
-            daftarCustomersDTO.setLastOrderDate(customerModel.getLastOrderDate());
             daftarCustomersDTO.setPic(customerModel.getPic());
-
+            if (customerModel.getLastOrderDate() != null) {
+               SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+               String formattedLastOrderDate = sdf.format(customerModel.getLastOrderDate());
+               daftarCustomersDTO.setLastOrderDate(formattedLastOrderDate);
+           } else {
+               daftarCustomersDTO.setLastOrderDate(null);
+           }
             ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
             responseBodyDTO.setTotal(1);
             responseBodyDTO.setData(daftarCustomersDTO);

@@ -31,8 +31,9 @@ public class ItemService {
    @Transactional
    public MessageResponse create(CreateItemRequest request) {
       try {
+         String itemCode = "I" + (int) (Math.random() * 1000);
          // create
-         ItemModel itemModel = ItemModel.builder().itemName(request.getItemName()).itemsCode(request.getItemsCode())
+         ItemModel itemModel = ItemModel.builder().itemName(request.getItemName()).itemsCode(itemCode)
                .stock(request.getStock()).price(request.getPrice()).isAvailable(request.getIsAvailable())
                .lastReStock(request.getLastReStock()).build();
          itemRepository.save(itemModel);

@@ -11,8 +11,6 @@ public class CreateCustomerRequest {
    private String customerName;
    @NotEmpty(message = "Alamat Customer tidak boleh kosong")
    private String customerAddress;
-   @NotEmpty(message = "Kode Customer tidak boleh kosong")
-   private String customerCode;
    @NotEmpty(message = "Nomor Telepon Customer tidak boleh kosong")
    private String customerPhone;
    private int isActive;

@@ -54,7 +54,7 @@ public MessageResponse delete(@RequestParam int itemId) {
 // get all item
 @GetMapping("/get-all")
 public ResponseEntity<Object> getAll(
-   @PageableDefault(page=0,size=8,sort="itemName",direction=Direction.DESC) Pageable pageable
+   @PageableDefault(page=0,size=8,sort="itemId",direction=Direction.ASC) Pageable pageable
 ) {
    return itemService.getAllItem(pageable);
 }

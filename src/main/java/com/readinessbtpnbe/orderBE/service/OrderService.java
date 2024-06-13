@@ -1,5 +1,6 @@
 package com.readinessbtpnbe.orderBE.service;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,49 +45,47 @@ public class OrderService {
 
    @Transactional
    public MessageResponse create(CreateOrderRequest request) {
+      log.info("request: " + request);
       try {
          Optional<CustomerModel> cusOptional = customerRepository.findById(request.getCustomerId());
 
          if (!cusOptional.isPresent()) {
             return new MessageResponse("Customer Tidak Ditemukan", HttpStatus.NOT_FOUND.value(), "ERROR");
          }
-         log.info("cusOptional: " + cusOptional);
-
-         Optional<ItemModel> itemOptional = itemRepository.findById(request.getItemsId());
+         Optional<ItemModel> itemOptional = itemRepository.findById(request.getItemId());
          log.info("itemOptional: " + itemOptional);
 
          if (!itemOptional.isPresent()) {
             return new MessageResponse("Item Tidak Ditemukan", HttpStatus.NOT_FOUND.value(), "ERROR");
          }
+         int totalPrice = request.getQuantity() * itemRepository.findById(request.getItemId()).get().getPrice();
 
-         int totalPrice = request.getQuantity() * itemRepository.findById(request.getItemsId()).get().getPrice();
-
-         ItemModel itemModel = itemRepository.findById(request.getItemsId()).get();
+         ItemModel itemModel = itemRepository.findById(request.getItemId()).get();
 
          if (itemModel.getStock() == 0) {
             itemModel.setIsAvailable(0);
             itemRepository.save(itemModel);
          }
-         log.info("itemModel: " + itemModel.getStock());
          if (request.getQuantity() > itemModel.getStock()) {
             return new MessageResponse("Stock Item Tidak Cukup, Stock Tersedia " + itemModel.getStock(),
                   HttpStatus.BAD_REQUEST.value(),
                   "ERROR");
+         } else {
+            itemModel.setStock(itemModel.getStock() - request.getQuantity());
+            itemRepository.save(itemModel);
          }
-         itemModel.setStock(itemModel.getStock() - request.getQuantity());
-         itemRepository.save(itemModel);
 
-         log.info("iAAAAAAAA" + itemModel.getStock());
-         
+
          OrderModel orderModel = OrderModel.builder()
          .customer(customerRepository.findById(request.getCustomerId()).get())
-         .item(itemRepository.findById(request.getItemsId()).get()).quantity(request.getQuantity())
-         .orderCode(generateOrderCode(request.getCustomerId(), request.getItemsId()))
+               .item(itemRepository.findById(request.getItemId()).get()).quantity(request.getQuantity())
+               .orderCode(generateOrderCode(request.getCustomerId(), request.getItemId()))
                .totalPrice(totalPrice)
-         .orderDate(java.time.LocalDateTime.now())
+               .orderDate(
+                     new java.sql.Date(System.currentTimeMillis()))
          .build();
          orderRepository.save(orderModel);
-         log.info("OOOOOOOOOOOOOOO"+orderModel.getOrderDate());
+
          
          CustomerModel customerModel = customerRepository.findById(request.getCustomerId()).get();
          customerModel.setLastOrderDate(orderModel.getOrderDate());
@@ -105,35 +104,53 @@ public class OrderService {
       try {
          // update
          Optional<OrderModel> orderModelOptional = orderRepository.findById(request.getOrderId());
+         Optional<ItemModel> itemOptional = itemRepository.findById(request.getItemId());
+         Optional<CustomerModel> cusOptional = customerRepository.findById(request.getCustomerId());
          log.info("orderModelOptional: " + orderModelOptional);
+         log.info("itemOptional: " + itemOptional);
+         log.info("cusOptional: " + cusOptional);
 
          if (!orderModelOptional.isPresent()) {
             return new MessageResponse("Order Tidak Ditemukan", HttpStatus.NOT_FOUND.value(), "ERROR");
          } else {
             OrderModel orderModel = orderModelOptional.get();
             // jika request null atau empty maka jangan dioperasikan
-            if (request.getCustomerId() != 0) {
-               Optional<CustomerModel> cusOptional = customerRepository.findById(request.getCustomerId());
-               if (!cusOptional.isPresent()) {
-                  return new MessageResponse("Customer Tidak Ditemukan", HttpStatus.NOT_FOUND.value(), "ERROR");
-               }
-               orderModel.setCustomer(customerRepository.findById(request.getCustomerId()).get());
-            }
-            if (request.getItemId() != 0) {
-               Optional<ItemModel> itemOptional = itemRepository.findById(request.getItemId());
-               if (!itemOptional.isPresent()) {
-                  return new MessageResponse("Item Tidak Ditemukan", HttpStatus.NOT_FOUND.value(), "ERROR");
-               }
-               orderModel.setItem(itemRepository.findById(request.getItemId()).get());
-            }
-            if (request.getQuantity() != 0) {
-               orderModel.setQuantity(request.getQuantity());
+
+            if (!cusOptional.isPresent()) {
+               return new MessageResponse("Customer Tidak Ditemukan", HttpStatus.NOT_FOUND.value(), "ERROR");
+            } else {
+               CustomerModel customerModel = cusOptional.get();
+               customerModel.setLastOrderDate(orderModel.getOrderDate());
+               customerRepository.save(customerModel);
             }
 
-            if (request.getItemId() != 0 || request.getQuantity() != 0) {
-               int totalPrice = request.getQuantity() * itemRepository.findById(request.getItemId()).get().getPrice();
-               orderModel.setTotalPrice(totalPrice);
+            if (!itemOptional.isPresent()) {
+               return new MessageResponse("Item Tidak Ditemukan", HttpStatus.NOT_FOUND.value(), "ERROR");
+            } else {
+               ItemModel itemModel = itemOptional.get();
+               if (itemModel.getStock() == 0) {
+                  itemModel.setIsAvailable(0);
+                  itemRepository.save(itemModel);
+               }
+               if (request.getQuantity() > itemModel.getStock()) {
+                  return new MessageResponse("Stock Item Tidak Cukup, Stock Tersedia " + itemModel.getStock(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        "ERROR");
+               } else {
+                  // itemModel.setStock(itemModel.getStock()+ request.getQuantity());
+                  int oldQuantity = orderModel.getQuantity();
+                  itemModel.setStock(itemModel.getStock() + oldQuantity);
+                  itemModel.setStock(itemModel.getStock() - request.getQuantity());
+                  itemRepository.save(itemModel);
+               }
+               if (request.getQuantity() != 0) {
+                  int totalPrice = request.getQuantity()
+                        * itemRepository.findById(request.getItemId()).get().getPrice();
+                  orderModel.setTotalPrice(totalPrice);
+                  orderModel.setQuantity(request.getQuantity());
+               }
             }
+
             orderModel.setOrderCode(generateOrderCode(request.getCustomerId(),
                   request.getItemId()));
 
@@ -175,7 +192,13 @@ public class OrderService {
             DaftarOrderDTO daftarOrderDTO = new DaftarOrderDTO();
             daftarOrderDTO.setOrderId(orderModel.getOrderId());
             daftarOrderDTO.setOrderCode(orderModel.getOrderCode());
-            daftarOrderDTO.setOrderDate(orderModel.getOrderDate());
+            if (orderModel.getOrderDate() != null) {
+               SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+               String formattedOrderDate = sdf.format(orderModel.getOrderDate());
+               daftarOrderDTO.setOrderDate(formattedOrderDate);
+            } else {
+               daftarOrderDTO.setOrderDate(null);
+            }
             DaftarCustomersDTO customerDTO = new DaftarCustomersDTO();
             CustomerModel customer = orderModel.getCustomer();
             customerDTO.setCustomerId(customer.getCustomerId());
@@ -184,7 +207,13 @@ public class OrderService {
             customerDTO.setCustomerCode(customer.getCustomerCode());
             customerDTO.setCustomerPhone(customer.getCustomerPhone());
             customerDTO.setIsActive(customer.getIsActive());
-            customerDTO.setLastOrderDate(customer.getLastOrderDate());
+            if (customer.getLastOrderDate() != null) {
+               SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+               String formattedLastOrderDate = sdf.format(customer.getLastOrderDate());
+               customerDTO.setLastOrderDate(formattedLastOrderDate);
+            } else {
+               customerDTO.setLastOrderDate(null);
+            }
             daftarOrderDTO.setCustomer(customerDTO);
             DaftarItemDTO itemDTO = new DaftarItemDTO();
             ItemModel item = orderModel.getItem();
@@ -232,7 +261,13 @@ public class OrderService {
             DaftarOrderDTO daftarOrderDTO = new DaftarOrderDTO();
             daftarOrderDTO.setOrderId(orderModel.getOrderId());
             daftarOrderDTO.setOrderCode(orderModel.getOrderCode());
-            daftarOrderDTO.setOrderDate(orderModel.getOrderDate());
+            if (orderModel.getOrderDate() != null) {
+               SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+               String formattedOrderDate = sdf.format(orderModel.getOrderDate());
+               daftarOrderDTO.setOrderDate(formattedOrderDate);
+            } else {
+               daftarOrderDTO.setOrderDate(null);
+            }
             DaftarCustomersDTO customerDTO = new DaftarCustomersDTO();
             CustomerModel customer = orderModel.getCustomer();
             customerDTO.setCustomerId(customer.getCustomerId());
@@ -241,7 +276,13 @@ public class OrderService {
             customerDTO.setCustomerCode(customer.getCustomerCode());
             customerDTO.setCustomerPhone(customer.getCustomerPhone());
             customerDTO.setIsActive(customer.getIsActive());
-            customerDTO.setLastOrderDate(customer.getLastOrderDate());
+            if (customer.getLastOrderDate() != null) {
+               SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+               String formattedLastOrderDate = sdf.format(customer.getLastOrderDate());
+               customerDTO.setLastOrderDate(formattedLastOrderDate);
+            } else {
+               customerDTO.setLastOrderDate(null);
+            }
             daftarOrderDTO.setCustomer(customerDTO);
             DaftarItemDTO itemDTO = new DaftarItemDTO();
             ItemModel item = orderModel.getItem();
@@ -275,7 +316,9 @@ public class OrderService {
 
    // generate order code
    private String generateOrderCode(int customerId, int orderId) {
-      return "ORD" + customerId + orderId + System.currentTimeMillis();
+      int random = (int) (Math.random() * 900) + 100;
+      int calculate = customerId + orderId + random;
+      return "ORD" + calculate;
    }
 
 }

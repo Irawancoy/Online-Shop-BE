@@ -6,7 +6,7 @@ import lombok.Data;
 public class CreateOrderRequest {
 
    private int customerId;
-   private int itemsId;
+   private int itemId;
    private int quantity;
 
 }

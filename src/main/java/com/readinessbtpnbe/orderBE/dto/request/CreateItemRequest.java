@@ -11,8 +11,6 @@ public class CreateItemRequest {
    
       @NotEmpty(message = "Nama Item tidak boleh kosong")
       private String itemName;
-      @NotEmpty(message = "Kode Item tidak boleh kosong")
-      private String itemsCode;
       private int stock;
       private int price;
       private int isAvailable;

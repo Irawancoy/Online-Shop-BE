@@ -53,7 +53,7 @@ public class CustomerController {
    // get all customer
    @GetMapping("/get-all")
    public ResponseEntity<Object> getAll(
-         @PageableDefault(page = 0, size = 8,sort = "customerName",direction = Direction.DESC) Pageable pageable) {
+         @PageableDefault(page = 0, size = 8,sort = "customerId",direction = Direction.ASC) Pageable pageable) {
       return customerService.getAllCustomer(pageable);
    }
 
