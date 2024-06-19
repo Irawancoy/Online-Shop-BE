@@ -24,6 +24,10 @@ import com.readinessbtpnbe.orderBE.dto.response.DaftarCustomersDTO;
 import com.readinessbtpnbe.orderBE.dto.response.ResponseBodyDTO;
 
 import java.text.SimpleDateFormat;
+import lib.minio.MinioSrvc;
+import lib.minio.exception.MinioServiceException;
+
+import org.springframework.web.multipart.MultipartFile;
 
 
 @Slf4j
@@ -33,15 +37,27 @@ public class CustomerService {
    @Autowired
    private CustomerRepository customerRepository;
 
+   @Autowired
+   private MinioSrvc minioSrvc;
+
    @Transactional
-   public MessageResponse create(CreateCustomerRequest request) {
+   public MessageResponse create(CreateCustomerRequest request, MultipartFile file) {
       try {
          String customerCode = "C" + (int) (Math.random() * 1000);
+         String imageFileName;
+         // upload file
+         try {
+            imageFileName = minioSrvc.uploadImageToMinio(request, file);
+         } catch (Exception e) {
+            String errorMessage = "Gagal upload file ke Minio";
+            log.error(errorMessage, e);
+            throw new MinioServiceException(errorMessage, e);
+         }
 
          // create
          CustomerModel customerModel = CustomerModel.builder().customerName(request.getCustomerName())
                .customerAddress(request.getCustomerAddress()).customerCode(customerCode)
-               .customerPhone(request.getCustomerPhone()).isActive(request.getIsActive()).pic(request.getPic()).build();
+               .customerPhone(request.getCustomerPhone()).isActive(request.getIsActive()).pic(imageFileName).build();
          customerRepository.save(customerModel);
          return new MessageResponse("Customer " + request.getCustomerName() + " Berhasil Ditambahkan",
                HttpStatus.OK.value(), "OK");
@@ -51,8 +67,18 @@ public class CustomerService {
    }
 
    @Transactional
-   public MessageResponse update(UpdateCustomerRequest request) {
+   public MessageResponse update(UpdateCustomerRequest request, MultipartFile file) {
       try {
+
+         // upload file
+         // String imageFileName;
+         // try {
+         //    imageFileName = minioSrvc.updateImageToMinio(request, file);
+         // } catch (Exception e) {
+         //    String errorMessage = "Gagal upload file ke Minio";
+         //    log.error(errorMessage, e);
+         //    throw new MinioServiceException(errorMessage, e);
+         // }
          // update
          Optional<CustomerModel> customerModelOptional = customerRepository.findById(request.getCustomerId());
          log.info("customerModelOptional: " + customerModelOptional);
@@ -73,10 +99,18 @@ public class CustomerService {
             if (request.getCustomerPhone() != null && !request.getCustomerPhone().isEmpty()) {
                customerModel.setCustomerPhone(request.getCustomerPhone());
             }
-               customerModel.setIsActive(request.getIsActive());
+            customerModel.setIsActive(request.getIsActive());
+            // customerModel.setPic(imageFileName);
 
-            if (request.getPic() != null && !request.getPic().isEmpty()) {
-               customerModel.setPic(request.getPic());
+            if (file != null) {
+               try {
+                  String newImageFileName = minioSrvc.updateImageToMinio(request, file);
+                  customerModel.setPic(newImageFileName);
+               } catch (Exception e) {
+                  // TODO: handle exception
+                  String errorMessage = "Gagal upload file ke Minio";
+                  throw new MinioServiceException(errorMessage, e);
+               }
             }
             customerRepository.save(customerModel);
             return new MessageResponse("Customer  Berhasil Diupdate",
@@ -123,7 +157,7 @@ public class CustomerService {
             daftarCustomersDTO.setLastOrderDate(
        null
             );
-            daftarCustomersDTO.setPic(customerModel.getPic());
+            daftarCustomersDTO.setPic(getImageUrl(customerModel.getPic()));
             if (customerModel.getLastOrderDate() != null) {
                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                String formattedLastOrderDate = sdf.format(customerModel.getLastOrderDate());
@@ -173,14 +207,14 @@ public class CustomerService {
             daftarCustomersDTO.setCustomerCode(customerModel.getCustomerCode());
             daftarCustomersDTO.setCustomerPhone(customerModel.getCustomerPhone());
             daftarCustomersDTO.setIsActive(customerModel.getIsActive());
-            daftarCustomersDTO.setPic(customerModel.getPic());
+            daftarCustomersDTO.setPic(getImageUrl(customerModel.getPic()));
             if (customerModel.getLastOrderDate() != null) {
                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                String formattedLastOrderDate = sdf.format(customerModel.getLastOrderDate());
                daftarCustomersDTO.setLastOrderDate(formattedLastOrderDate);
-           } else {
+            } else {
                daftarCustomersDTO.setLastOrderDate(null);
-           }
+            }
             ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
             responseBodyDTO.setTotal(1);
             responseBodyDTO.setData(daftarCustomersDTO);
@@ -197,6 +231,14 @@ public class CustomerService {
          responseBodyDTO.setStatus("ERROR");
          return responseBodyDTO;
       }
-     
+
+   }
+
+   public String getImageUrl(String filename) {
+      String url = "";
+      if (filename != null) {
+         url = minioSrvc.getPublicLink(filename);
+      }
+      return url;
    }
 }
